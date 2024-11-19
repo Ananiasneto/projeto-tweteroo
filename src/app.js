@@ -17,6 +17,11 @@ const userSchema = Joi.object({
     username: Joi.string().required(),
     avatar: Joi.string().required(),
   });
+const tweetSchema = Joi.object({
+    username: Joi.string().required(),
+    tweet: Joi.string().required(),
+  });
+
 
 mongoClient.connect()
   .then(() => {
@@ -41,7 +46,27 @@ app.post("/sign-up", async (req, res) => {
     res.status(500).send("Erro no servidor");
   }
 });
+app.post("/tweets",async (req,res)=>{
+    const tweet = req.body;
+  const { error } = tweetSchema.validate(tweet, { abortEarly: false });
+  if (error) {
+    return res.status(422).send({
+      details: error.details.map((detail) => detail.message),
+    });
+  }
+  try {
+    const usuarioLogado = await db.collection("users").findOne({ username: tweet.username });
 
+    if (!usuarioLogado) {
+      return res.status(401).send("Usuário não autorizado");
+    }
+    await db.collection("tweets").insertOne(tweet);
+    res.status(201).send("Tweet criado com sucesso");
+  } catch (err) {
+    console.log("Erro ao inserir tweet:", err.message);
+    res.status(500).send("Erro no servidor");
+  }
+});
 
 
 
