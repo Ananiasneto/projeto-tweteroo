@@ -67,7 +67,23 @@ app.post("/tweets",async (req,res)=>{
     res.status(500).send("Erro no servidor");
   }
 });
+app.get("/tweets", async (req, res) => {
+    try {
+        
+      const tweets = await db.collection("tweets").find().toArray();
+      const user = await db.collection("user").findOne({ username: tweets.username });
+        
+      tweetsAvatar={
+        username: tweets.username,
+        avatar: user,
+        tweet: tweets.tweet
+      };
 
+      res.status(200).send(tweetsAvatar);
+    } catch (err) {
+      res.status(500).send("Erro ao buscar tweets");
+    }
+  });
 
 
 app.listen(PORT, () => {
