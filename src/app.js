@@ -75,7 +75,7 @@ app.get("/tweets", async (req, res) => {
     const arrayTweets = await db.collection("tweets").find().toArray();
 
     const tweetsUsuario = {};
-    
+
     arrayTweets.forEach((tweet) => {
       if (!tweetsUsuario[tweet.username]) {
         tweetsUsuario[tweet.username] = [];
@@ -86,24 +86,21 @@ app.get("/tweets", async (req, res) => {
     const tweetsAvatar = await Promise.all(
       Object.keys(tweetsUsuario).map(async (username) => {
         const userTweets = tweetsUsuario[username];
-        const ultimoTweet = userTweets[userTweets.length - 1];
        
         const user = await db.collection("users").findOne({ username });
 
-        return {
-          id: ultimoTweet._id, 
+        return userTweets.map((tweet) => ({
+          id: tweet._id, 
           username,
           avatar: user.avatar,
-          tweet: ultimoTweet.tweet,
-        
-        };
+          tweet: tweet.tweet,
+        }));
       })
     );
+    const todosTweets = tweetsAvatar.flat();
+    todosTweets.sort((a, b) => b.id.getTimestamp() - a.id.getTimestamp());
 
-    tweetsAvatar.sort((a, b) => b.id.getTimestamp() - a.id.getTimestamp());
-
-
-    res.status(200).send(tweetsAvatar);
+    res.status(200).send(todosTweets);
   } catch (err) {
     console.error(err);
     res.status(500).send("Erro ao buscar tweets");
